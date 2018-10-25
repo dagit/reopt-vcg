@@ -56,8 +56,14 @@ def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))
 def push {w:ℕ} (value : expression (bv w)) : semantics unit := sorry
 def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := sorry
 
--- This will be an event
-def do_jump {w:ℕ} (cond : bool) (value : expression (bv w)) : semantics unit := sorry
+def do_jmp (cond : bool) (addr : expression (bv 64)) : semantics unit :=
+  match cond with
+  | tt := record_event (event.jmp addr)
+  | _  := pure ()
+  end
+
+def do_xchg {w:ℕ} (addr1 : bv w) (addr2 : bv w) : semantics unit :=
+  record_event (event.xchg addr1 addr2)
 
 -- `off` is the index of the bit to return.
 -- TODO: figure out how to handle out of bounds and any other edge cases and document the
@@ -189,13 +195,10 @@ def movzx : instruction := do
 ------------------------------------------------------------------------
 -- xchg definition
 -- Exchange Register/Memory with Register
--- TODO: add a new xchg event for doing the exchange
 def xchg : instruction := do
  definst "xchg" $ do
    pattern λ(w : one_of [8,16,32,64]) (dest : lhs (bv w)) (src : lhs (bv w)), do
-     tmp ← eval $ ⇑dest,
-     dest .= src,
-     src  .= tmp
+     do_xchg ⇑dest ⇑src
    pat_end
 
 ------------------------------------------------------------------------
@@ -389,7 +392,7 @@ def call : instruction :=
 def jmp : instruction :=
  definst "jmp" $ do
    pattern λ(w : one_of [8, 16, 32, 64]) (v : bv w), do
-     do_jump true v
+     do_jmp true (uext v 64)
    pat_end
 
 ------------------------------------------------------------------------

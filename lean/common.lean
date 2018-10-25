@@ -476,7 +476,9 @@ inductive event
 | unsupported (msg:string) : event
 | pop_x87_register_stack : event
 | call (addr: bv 64) : event
+| jmp  (addr: bv 64) : event
 | ret : event
+| xchg {w : nat_expr} (addr1: bv w) (addr2: bv w) : event
 
 namespace event
 
@@ -485,7 +487,9 @@ protected def pp : event → string
 | (unsupported msg) := "(unsupported " ++ msg ++ ")"
 | pop_x87_register_stack := "(pop_x87_register_stack)"
 | (call addr) := "(call " ++ addr.pp ++ ")"
+| (jmp  addr) := "(jmp " ++ addr.pp ++ ")"
 | ret := "(ret)"
+| (xchg addr1 addr2) := "(xchg " ++ addr1.pp ++ " " ++ addr2.pp ++ ")"
 
 end event
 
