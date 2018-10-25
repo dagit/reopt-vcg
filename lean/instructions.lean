@@ -57,8 +57,18 @@ def uadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))
 def uadc4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
 def sadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
 
-def push {w:ℕ} (value : expression (bv w)) : semantics unit := sorry
-def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := sorry
+def nat_expr_to_bv {w:ℕ} (x : ℕ) : bv w := sorry
+
+def push {w: one_of [8, 16, 32, 64]} (value : expression (bv w)) : semantics unit := do
+  rsp .= ⇑rsp - (nat_expr_to_bv (one_of.to_nat_expr w)),
+  ⇑rsp .= uext value 64,
+  return ()
+
+-- def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := do
+def pop (w: ℕ) : semantics (bv w) := do
+  temp ← eval ⇑rsp,
+  rsp .= ⇑rsp + (nat_expr_to_bv w),
+  return (uext temp w)
 
 def do_jmp (cond : bool) (addr : expression (bv 64)) : semantics unit :=
   match cond with
@@ -354,6 +364,22 @@ def adc : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- xadd definition
+-- Exchange and Add
+
+def xadd : instruction := do
+ definst "xadd" $ do
+   pattern λ(w : one_of [8, 16, 32, 64]) (dest : lhs (bv w)) (src : lhs (bv w)), do
+     tmp ← eval $ ⇑dest + ⇑src,
+     src .= ⇑dest,
+     set_result_flags tmp,
+     cf .= uadd_overflows  tmp src,
+     of .= sadd_overflows  tmp src,
+     af .= uadd4_overflows tmp src,
+     dest .= tmp
+   pat_end
+
+------------------------------------------------------------------------
 -- fadd definition
 
 def fadd : instruction := do
@@ -428,12 +454,33 @@ def jmp : instruction :=
 def ret : instruction :=
  definst "ret" $ do
    pattern do
-     pop (one_of.var 64),
+     -- pop (one_of.var 64),
+     pop 64,
      record_event event.ret
    pat_end,
    pattern λ(off : (bv 16)), do
-     pop (one_of.var (64 + bv_to_nat off)),
+     -- pop (one_of.var (64 + bv_to_nat off)),
+     pop (64 + bv_to_nat off),
      record_event event.ret
+   pat_end
+
+------------------------------------------------------------------------
+-- pop definition
+-- Pop a Value from the Stack
+def pop_def : instruction :=
+ definst "pop" $ do
+   pattern λ(w : one_of [16, 32, 64]) (dest: lhs (bv w)),do
+     v ← pop w,
+     dest .= v
+   pat_end
+
+------------------------------------------------------------------------
+-- push definition
+-- Push Word, Doubleword or Quadword Onto the Stack
+def push_def : instruction :=
+ definst "push" $ do
+   pattern λ(w : one_of [8, 16, 32, 64]) (value: bv w),do
+     push value
    pat_end
 
 ------------------------------------------------------------------------
@@ -464,6 +511,33 @@ def cqo : instruction :=
    pattern do
      let octword := sext ⇑rax 128, do
      rdx .= octword[[127..64]]
+   pat_end
+
+------------------------------------------------------------------------
+-- cbw definition
+-- Convert Byte to Word
+def cbw : instruction :=
+ definst "cbw" $ do
+   pattern do
+     ax .= sext ⇑al 16
+   pat_end
+
+------------------------------------------------------------------------
+-- cwde definition
+-- Convert Word to Doubleword
+def cwde : instruction :=
+ definst "cwde" $ do
+   pattern do
+     eax .= sext ⇑ax 32
+   pat_end
+
+------------------------------------------------------------------------
+-- cwde definition
+-- Convert Doubleword to Quadword
+def cdqe : instruction :=
+ definst "cdqe" $ do
+   pattern do
+     rax .= sext ⇑eax 64
    pat_end
 
 end x86

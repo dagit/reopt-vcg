@@ -416,6 +416,7 @@ instance (a:type) (f:type) : has_coe_to_fun (expression (type.fn a f)) :=
 instance (w:ℕ) : has_zero (expression (bv w)) := sorry
 instance (w:ℕ) : has_one  (expression (bv w)) := sorry
 instance (w:ℕ) : has_add  (expression (bv w)) := sorry
+instance (w:ℕ) : has_sub  (expression (bv w)) := sorry
 
 def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit → expression (bv w) := sorry
 def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
