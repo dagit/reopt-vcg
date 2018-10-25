@@ -53,6 +53,10 @@ def uadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))
 def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 
+def uadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
+def uadc4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
+def sadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
+
 def push {w:ℕ} (value : expression (bv w)) : semantics unit := sorry
 def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := sorry
 
@@ -163,8 +167,6 @@ def movs : instruction := do
 ------------------------------------------------------------------------
 -- movsx definition
 -- Move with Sign-Extension
-
--- Note: When Semantics.hs says 'get', we use 'eval'
 
 def movsx : instruction := do
  definst "movsx" $ do
@@ -313,6 +315,16 @@ def bsr_def : instruction := do
   pat_end
 
 ------------------------------------------------------------------------
+-- bswap definition
+-- Byte Swap
+
+def bswap : instruction := do
+ definst "bswap" $ do
+   pattern λ(w : one_of [32, 64]) (dest : lhs (bv w)), do
+     dest .= expression.bswap ⇑dest
+   pat_end
+
+------------------------------------------------------------------------
 -- add definition
 
 def add : instruction := do
@@ -323,6 +335,21 @@ def add : instruction := do
      cf .= uadd_overflows tmp src,
      of .= sadd_overflows tmp src,
      af .= uadd4_overflows tmp src,
+     dest .= tmp
+   pat_end
+
+------------------------------------------------------------------------
+-- adc definition
+-- Add with Carry
+
+def adc : instruction := do
+ definst "adc" $ do
+   pattern λ(w : one_of [8, 16, 32, 64]) (dest : lhs (bv w)) (src : bv w), do
+     tmp ← eval $ expression.adc ⇑dest src cf,
+     set_result_flags tmp,
+     cf .= uadc_overflows  tmp src cf,
+     of .= sadc_overflows  tmp src cf,
+     af .= uadc4_overflows tmp src cf,
      dest .= tmp
    pat_end
 

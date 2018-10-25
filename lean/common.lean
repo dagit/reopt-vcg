@@ -340,6 +340,8 @@ local infixr `.→`:30 := fn
 inductive prim : type → Type
 -- `(add i)` returns the sum of two i-bit numbers.
 | add (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(adc i)` returns the sum of two i-bit numbers and a carry bit.
+| adc (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bv i)
 -- `(mul i)` returns the product of two i-bit numbers.
 | mul (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 -- `(slice w u l)` takes bits `u` through `l` out of a `w`-bit number.
@@ -354,6 +356,8 @@ inductive prim : type → Type
 | bsf   (i:ℕ) : prim (bv i .→ bv i)
 -- `(bsr i)` returns the index of most-siginifant bit that is 1.
 | bsr   (i:ℕ) : prim (bv i .→ bv i)
+-- `(bswap i)` reverses the bytes in the bitvector.
+| bswap (i:ℕ) : prim (bv i .→ bv i)
 -- `(eq tp)` returns `true` if two values are equal.
 | eq (tp:type) : prim (tp .→ tp .→ bit)
 -- `(neq tp)` returns `true` if two values are not equal.
@@ -371,6 +375,7 @@ namespace prim
 
 def pp : Π{tp:type}, prim tp → string
 | ._ (add i) := "add " ++ i.pp
+| ._ (adc i) := "adc " ++ i.pp
 | ._ (mul i) := "mul " ++ i.pp
 | ._ (slice w u l) := "slice " ++ w.pp ++ " " ++ u.pp ++ " " ++ l.pp
 | ._ (sext i o) := "sext " ++ i.pp ++ " " ++ o.pp
@@ -378,6 +383,7 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (trunc i o) := "trunc " ++ i.pp ++ " " ++ o.pp
 | ._ (bsf i) := "bsf " ++ i.pp
 | ._ (bsr i) := "bsr " ++ i.pp
+| ._ (bswap i) := "bswap " ++ i.pp
 | ._ (eq tp) := "eq " ++ tp.pp
 | ._ (neq tp) := "neq " ++ tp.pp
 | ._ x87_fadd := "x87_fadd"
@@ -410,6 +416,9 @@ instance (a:type) (f:type) : has_coe_to_fun (expression (type.fn a f)) :=
 instance (w:ℕ) : has_zero (expression (bv w)) := sorry
 instance (w:ℕ) : has_one  (expression (bv w)) := sorry
 instance (w:ℕ) : has_add  (expression (bv w)) := sorry
+
+def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit → expression (bv w) := sorry
+def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
 
 protected
 def is_app : Π{tp:type}, expression tp → bool
