@@ -42,26 +42,23 @@ def set_overflow (b:bit) : semantics unit := do
   set_undefined af,
   set_undefined pf
 
-def set_result_flags {w:ℕ} (res : value (bv w)) : semantics unit := do
+def set_result_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
   sf .= msb res,
   zf .= is_zero res,
   pf .= even_parity (least_byte res)
 
-def set_bitwise_flags {w:ℕ} (res : value (bv w)) : semantics unit := sorry
+def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := sorry
 
-def uadd_overflows  {w:ℕ} (dest : value (bv w)) (src : value (bv w)) : bit := sorry
-def uadd4_overflows {w:ℕ} (dest : value (bv w)) (src : value (bv w)) : bit := sorry
-def sadd_overflows  {w:ℕ} (dest : value (bv w)) (src : value (bv w)) : bit := sorry
+def uadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 
--- TODO: rename value to expression
-
--- TODO: define these as events
-def push {w:ℕ} (value : value (bv w)) : semantics unit := sorry
+def push {w:ℕ} (value : expression (bv w)) : semantics unit := sorry
 -- TODO: is the pop width right?
-def pop (w: one_of [8,16,32,64]) : semantics (value (bv w)) := sorry
+def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := sorry
 
 -- This will be an event
-def do_jump {w:ℕ} (cond : bool) (value : value (bv w)) : semantics unit := sorry
+def do_jump {w:ℕ} (cond : bool) (value : expression (bv w)) : semantics unit := sorry
 
 -- TODO: shouldn't the second argument be something like fin w ?
 -- Document that off is the index and what it does when it's out of bounds
@@ -70,8 +67,8 @@ def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := sorry
 def bv_shl {w:ℕ} (b : bv w) (y : bv w) : bv w := sorry
 def bv_complement {w:ℕ} (b : bv w) : bv w := sorry
 def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
-def bv_and {w:ℕ} (x : value (bv w)) (y : value (bv w)) : value (bv w) := sorry
-def bv_or  {w:ℕ} (x : value (bv w)) (y : value (bv w)) : value (bv w) := sorry
+def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
+def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
 -- TODO: should this be int?
 def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
 

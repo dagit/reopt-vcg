@@ -387,60 +387,60 @@ def pp : Π{tp:type}, prim tp → string
 
 end prim
 
--- Type for expressions that may denote a value.
-inductive value : type → Type
--- Create a value our of a primitive
-| primitive {rtp:type} (o:prim rtp) : value rtp
+-- Type for expressions.
+inductive expression : type → Type
+-- Create a expression our of a primitive
+| primitive {rtp:type} (o:prim rtp) : expression rtp
 -- Apply a function to an argument.
-| app {rtp:type} {tp:type} (f : value (type.fn tp rtp)) (a : value tp) : value rtp
-  -- Get the value associated with the assignable value.
-| get {tp:type} (l:lhs tp) : value tp
-  -- Return the value in the local variable at the given index.
-| get_local (idx:ℕ) (tp:type) : value tp
+| app {rtp:type} {tp:type} (f : expression (type.fn tp rtp)) (a : expression tp) : expression rtp
+  -- Get the expression associated with the assignable expression.
+| get {tp:type} (l:lhs tp) : expression tp
+  -- Return the expression in the local variable at the given index.
+| get_local (idx:ℕ) (tp:type) : expression tp
 
-namespace value
+namespace expression
 
-instance (rtp:type) : has_coe (prim rtp) (value rtp) := ⟨value.primitive⟩
+instance (rtp:type) : has_coe (prim rtp) (expression rtp) := ⟨expression.primitive⟩
 
-instance (a:type) (f:type) : has_coe_to_fun (value (type.fn a f)) :=
-{ F := λ_, Π(y:value a), value f
+instance (a:type) (f:type) : has_coe_to_fun (expression (type.fn a f)) :=
+{ F := λ_, Π(y:expression a), expression f
 , coe := app
 }
 
-instance (w:ℕ) : has_zero (value (bv w)) := sorry
-instance (w:ℕ) : has_one  (value (bv w)) := sorry
-instance (w:ℕ) : has_add  (value (bv w)) := sorry
+instance (w:ℕ) : has_zero (expression (bv w)) := sorry
+instance (w:ℕ) : has_one  (expression (bv w)) := sorry
+instance (w:ℕ) : has_add  (expression (bv w)) := sorry
 
 protected
-def is_app : Π{tp:type}, value tp → bool
+def is_app : Π{tp:type}, expression tp → bool
 | ._ (app _ _) := tt
 | _ _ := ff
 
 protected
-def pp_args : Π{tp:type}, value tp → string
+def pp_args : Π{tp:type}, expression tp → string
 | ._ (primitive o) := o.pp
 | ._ (app f a) := f.pp_args ++ " " ++ paren_if a.is_app a.pp_args
 | ._ (get lhs) := lhs.repr
 | ._ (get_local idx tp) := sexp.app "local" [idx.pp]
 
 protected
-def pp {tp:type} (v:value tp) := paren_if v.is_app v.pp_args
+def pp {tp:type} (v:expression tp) := paren_if v.is_app v.pp_args
 
-instance (tp:type) : has_repr (value tp) := ⟨value.pp⟩
+instance (tp:type) : has_repr (expression tp) := ⟨expression.pp⟩
 
-instance addr_is_value (tp:type) : has_coe (addr tp) (value tp) :=
-⟨ value.get ∘ lhs.addr ⟩
+instance addr_is_expression (tp:type) : has_coe (addr tp) (expression tp) :=
+⟨ expression.get ∘ lhs.addr ⟩
 
-instance type_is_sort     : has_coe_to_sort type := ⟨Type, value⟩
-instance all_lhs_is_value : has_coe1 lhs value := ⟨λ_, value.get⟩
-instance lhs_is_value (tp:type) : has_coe (lhs tp) (value tp) := ⟨value.get⟩
+instance type_is_sort     : has_coe_to_sort type := ⟨Type, expression⟩
+instance all_lhs_is_expression : has_coe1 lhs expression := ⟨λ_, expression.get⟩
+instance lhs_is_expression (tp:type) : has_coe (lhs tp) (expression tp) := ⟨expression.get⟩
 
-end value
+end expression
 
--- Operations on values
+-- Operations on expressions
 
-def slice {w:nat_expr} (x:value (bv w)) (u:nat_expr) (l:nat_expr)
-: value (bv (u+1-l)) := prim.slice w u l x
+def slice {w:nat_expr} (x:expression (bv w)) (u:nat_expr) (l:nat_expr)
+: expression (bv (u+1-l)) := prim.slice w u l x
 
 def trunc {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.trunc w o x
 
@@ -494,8 +494,8 @@ end event
 
 -- Denotes updates to program state from register.
 inductive action
-| set {tp:type} (l:lhs tp) (v:value tp) : action
-| local_def {tp:type} (idx:ℕ) (v:value tp) : action
+| set {tp:type} (l:lhs tp) (v:expression tp) : action
+| local_def {tp:type} (idx:ℕ) (v:expression tp) : action
 | event (e:event) : action
 | mk_undef {tp:type} (l:lhs tp) : action
 
@@ -515,14 +515,14 @@ end action
 inductive binding
 | one_of : list nat → binding
 | lhs : type → binding
-| value : type → binding
+| expression : type → binding
 
 namespace binding
 
 def pp : binding → string
 | (one_of l) := sexp.app "one_of" (nat.repr <$> l)
 | (lhs tp) := sexp.app "lhs" [tp.pp]
-| (value tp) := sexp.app "value" [tp.pp]
+| (expression tp) := sexp.app "expression" [tp.pp]
 
 end binding
 
@@ -606,9 +606,9 @@ instance lhs_is_bound_var (tp:type) : is_bound_var (lhs tp) :=
 , mk_arg := λi, lhs.arg i tp
 }
 
-instance value_is_bound_var (tp:type) : is_bound_var (value tp) :=
-{ to_binding := binding.value tp
-, mk_arg := λi, value.get (lhs.arg i tp)
+instance expression_is_bound_var (tp:type) : is_bound_var (expression tp) :=
+{ to_binding := binding.expression tp
+, mk_arg := λi, expression.get (lhs.arg i tp)
 }
 
 ------------------------------------------------------------------------
@@ -660,15 +660,15 @@ def record_event (e:event) : semantics unit :=
 -- Record that some code path is unsupported.
 def unsupported (msg:string) := record_event (event.unsupported msg)
 
---- Set the value of the left-hand side to the value.
-def set {tp:type} (l:lhs tp) (v:value tp) : semantics unit :=
+--- Set the expression of the left-hand side to the expression.
+def set {tp:type} (l:lhs tp) (v:expression tp) : semantics unit :=
   semantics.add_action (action.set l v)
 
---- Evaluate the given value and return a local value that will not mutate.
-def eval {tp : type} (v:value tp) : semantics (value tp) := do
+--- Evaluate the given expression and return a local expression that will not mutate.
+def eval {tp : type} (v:expression tp) : semantics (expression tp) := do
   idx ← semantics.next_local_index,
   semantics.add_action (action.local_def idx v),
-  return (value.get_local idx tp)
+  return (expression.get_local idx tp)
 
 protected
 def run (m:semantics unit) : list action := do
