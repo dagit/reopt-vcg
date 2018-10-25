@@ -46,6 +46,8 @@ inductive nat_expr : Type
 | add : nat_expr → nat_expr → nat_expr
 | sub : nat_expr → nat_expr → nat_expr
 | mul : nat_expr → nat_expr → nat_expr
+-- div x y is floor (x / y)
+| div : nat_expr → nat_expr → nat_expr
 
 namespace nat_expr
 
@@ -65,11 +67,16 @@ protected def do_mul : nat_expr → nat_expr → nat_expr
 | (lit x) (lit y) := lit (x*y)
 | x y := mul x y
 
+protected def do_div : nat_expr → nat_expr → nat_expr
+| (lit x) (lit y) := lit (x/y)
+| x y := div x y
+
 instance : has_zero nat_expr := ⟨nat_expr.zero⟩
 instance : has_one nat_expr := ⟨nat_expr.one⟩
 instance : has_add nat_expr := ⟨nat_expr.do_add⟩
 instance : has_sub nat_expr := ⟨nat_expr.do_sub⟩
 instance : has_mul nat_expr := ⟨nat_expr.do_mul⟩
+instance : has_div nat_expr := ⟨nat_expr.do_div⟩
 
 protected def pp : nat_expr → string
 | (lit x) := x.repr
@@ -77,6 +84,7 @@ protected def pp : nat_expr → string
 | (add x y) := sexp.app "addNat" [x.pp, y.pp]
 | (sub x y) := sexp.app "subNat" [x.pp, y.pp]
 | (mul x y) := sexp.app "mulNat" [x.pp, y.pp]
+| (div x y) := sexp.app "divNat" [x.pp, y.pp]
 
 instance : has_repr nat_expr := ⟨nat_expr.pp⟩
 
@@ -297,6 +305,18 @@ def rax := reg64 0
 def rcx := reg64 1
 def rdx := reg64 2
 def rbx := reg64 3
+def rsi := reg64 4
+def rdi := reg64 5
+def rsp := reg64 6
+def rbp := reg64 7
+def r8  := reg64 8
+def r9  := reg64 9
+def r10 := reg64 10
+def r11 := reg64 11
+def r12 := reg64 12
+def r13 := reg64 13
+def r14 := reg64 14
+def r15 := reg64 15
 
 def flagreg (i:fin 32) := lhs.reg $ reg.concrete_flagreg i
 
@@ -330,6 +350,10 @@ inductive prim : type → Type
 | uext  (i:ℕ) (o:ℕ) : prim (bv i .→ bv o)
 -- `(trunc i o)` truncates an `i`-bit number to a `o`-bit number.
 | trunc (i:ℕ) (o:ℕ) : prim (bv i .→ bv o)
+-- `(bsf i)` returns the index of least-siginifant bit that is 1.
+| bsf   (i:ℕ) : prim (bv i .→ bv i)
+-- `(bsr i)` returns the index of most-siginifant bit that is 1.
+| bsr   (i:ℕ) : prim (bv i .→ bv i)
 -- `(eq tp)` returns `true` if two values are equal.
 | eq (tp:type) : prim (tp .→ tp .→ bit)
 -- `(neq tp)` returns `true` if two values are not equal.
@@ -352,6 +376,8 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (sext i o) := "sext " ++ i.pp ++ " " ++ o.pp
 | ._ (uext i o) := "uext " ++ i.pp ++ " " ++ o.pp
 | ._ (trunc i o) := "trunc " ++ i.pp ++ " " ++ o.pp
+| ._ (bsf i) := "bsf " ++ i.pp
+| ._ (bsr i) := "bsr " ++ i.pp
 | ._ (eq tp) := "eq " ++ tp.pp
 | ._ (neq tp) := "neq " ++ tp.pp
 | ._ x87_fadd := "x87_fadd"
@@ -418,6 +444,10 @@ def slice {w:nat_expr} (x:value (bv w)) (u:nat_expr) (l:nat_expr)
 
 def trunc {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.trunc w o x
 
+def bsf {w:nat_expr} (x: bv w) : bv w := prim.bsf w x
+
+def bsr {w:nat_expr} (x: bv w) : bv w := prim.bsr w x
+
 def sext {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.sext w o x
 
 def uext {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.uext w o x
@@ -445,6 +475,8 @@ inductive event
 | syscall : event
 | unsupported (msg:string) : event
 | pop_x87_register_stack : event
+| call (addr: bv 64) : event
+| ret : event
 
 namespace event
 
@@ -452,6 +484,8 @@ protected def pp : event → string
 | syscall := "(syscall)"
 | (unsupported msg) := "(unsupported " ++ msg ++ ")"
 | pop_x87_register_stack := "(pop_x87_register_stack)"
+| (call addr) := "(call " ++ addr.pp ++ ")"
+| ret := "(ret)"
 
 end event
 
