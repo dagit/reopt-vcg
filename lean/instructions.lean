@@ -54,14 +54,14 @@ def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))
 def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 
 def push {w:ℕ} (value : expression (bv w)) : semantics unit := sorry
--- TODO: is the pop width right?
 def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := sorry
 
 -- This will be an event
 def do_jump {w:ℕ} (cond : bool) (value : expression (bv w)) : semantics unit := sorry
 
--- TODO: shouldn't the second argument be something like fin w ?
--- Document that off is the index and what it does when it's out of bounds
+-- `off` is the index of the bit to return.
+-- TODO: figure out how to handle out of bounds and any other edge cases and document the
+-- assumptions.
 def bv_bit {w:ℕ} (base : bv w) (off : bv w) : bit := sorry
 def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := sorry
 def bv_shl {w:ℕ} (b : bv w) (y : bv w) : bv w := sorry
@@ -69,7 +69,6 @@ def bv_complement {w:ℕ} (b : bv w) : bv w := sorry
 def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
 def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
 def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
--- TODO: should this be int?
 def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
 
 infixl `.|.`:65 := bv_or
@@ -242,8 +241,11 @@ def btc : instruction := do
    pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv w), do
      cf   .= bv_bit ⇑base off,
      base .= bv_xor ⇑base (bv_shl 1 off)
+   pat_end,
+   pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv 8), do
+     cf   .= bv_bit ⇑base (uext off w),
+     base .= bv_xor ⇑base (uext (bv_shl 1 off) w)
    pat_end
-   -- TODO: what about the case where off is an imm8?
 
 ------------------------------------------------------------------------
 -- btr definition
@@ -254,8 +256,11 @@ def btr : instruction := do
    pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv w), do
      cf   .= bv_bit ⇑base off,
      base .= ⇑base .&. (bv_complement (bv_shl 1 off))
+   pat_end,
+   pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv 8), do
+     cf   .= bv_bit ⇑base (uext off w),
+     base .= ⇑base .&. (bv_complement (uext (bv_shl 1 off) w))
    pat_end
-   -- TODO: what about the case where off is an imm8?
 
 ------------------------------------------------------------------------
 -- bts definition
@@ -266,8 +271,11 @@ def bts : instruction := do
    pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv w), do
      cf   .= bv_bit ⇑base off,
      base .= ⇑base .|. (bv_shl 1 off)
+   pat_end,
+   pattern λ(w : one_of [16, 32, 64]) (base : lhs (bv w)) (off : bv 8), do
+     cf   .= bv_bit ⇑base (uext off w),
+     base .= ⇑base .|. (uext (bv_shl 1 off) w)
    pat_end
-   -- TODO: what about the case where off is an imm8?
 
 ------------------------------------------------------------------------
 -- bsf definition
