@@ -242,6 +242,25 @@ def cmp : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- cmpxchg definition
+-- Compare and Exchange
+
+/-
+
+This instruction should be fairly straigth forward in the register-only
+case, but requires more care for the memory case. We will probably also
+need a notion of muxing on a bit.
+
+def cmpxchg : instruction := do
+ definst "cmpxchg" $ do
+   pattern λ(dest : lhs (bv 8)) (src : bv 8), do
+     temp ← eval $ ⇑dest,
+     do_cmp ⇑al temp,
+     zf .= temp = dest
+   pat_end
+-/
+
+------------------------------------------------------------------------
 -- dec definition
 -- Decrement by 1
 
