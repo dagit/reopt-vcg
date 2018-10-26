@@ -376,6 +376,16 @@ def and : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- not definition
+-- One's Complement Negation
+
+def not : instruction := do
+ definst "not" $ do
+   pattern λ(w : one_of [8, 16, 32, 64]) (dest : lhs (bv w)), do
+     dest .= bv_complement ⇑dest
+   pat_end
+
+------------------------------------------------------------------------
 -- bt definition
 -- Bit Test
 
