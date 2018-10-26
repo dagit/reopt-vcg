@@ -284,6 +284,8 @@ def spl := reg8l 4
 def bpl := reg8l 5
 def sil := reg8l 6
 def dil := reg8l 7
+ -- TODO: this order okay?
+def ah  := reg8l 8
 
 def reg16 (i:fin 16) := lhs.reg $ reg.concrete_gpreg i gpreg_type.reg16
 
@@ -344,6 +346,10 @@ inductive prim : type → Type
 | adc (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bv i)
 -- `(mul i)` returns the product of two i-bit numbers.
 | mul (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(quot i)` returns the quotient of two i-bit numbers.
+| quot (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(rem i)` returns the remainder of two i-bit numbers.
+| rem (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 -- `(slice w u l)` takes bits `u` through `l` out of a `w`-bit number.
 | slice (w:ℕ) (u:ℕ) (l:ℕ) : prim (bv w .→ bv (u+1-l))
 -- `(sext i o)` sign extends an `i`-bit number to a `o`-bit number.
@@ -381,6 +387,8 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (add i) := "add " ++ i.pp
 | ._ (adc i) := "adc " ++ i.pp
 | ._ (mul i) := "mul " ++ i.pp
+| ._ (quot i) := "quot " ++ i.pp
+| ._ (rem i) := "rem " ++ i.pp
 | ._ (slice w u l) := "slice " ++ w.pp ++ " " ++ u.pp ++ " " ++ l.pp
 | ._ (sext i o) := "sext " ++ i.pp ++ " " ++ o.pp
 | ._ (uext i o) := "uext " ++ i.pp ++ " " ++ o.pp
@@ -426,6 +434,8 @@ instance (w:ℕ) : has_sub  (expression (bv w)) := sorry
 
 def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit → expression (bv w) := sorry
 def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
+def quot {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
+def rem {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
 
 protected
 def is_app : Π{tp:type}, expression tp → bool

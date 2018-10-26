@@ -100,6 +100,7 @@ def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
 def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
 def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
 def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
+def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := sorry
 
 infixl `.|.`:65 := bv_or
 infixl `.&.`:70 := bv_and
@@ -254,6 +255,38 @@ def dec : instruction := do
      af .= usub4_overflows temp 1,
      set_result_flags temp,
      value .= temp
+   pat_end
+
+------------------------------------------------------------------------
+-- div definition
+-- Unsigned Divide
+
+def div : instruction := do
+ definst "div" $ do
+   -- TODO: would it be better to have a single div primitive?
+   pattern λ(src : bv 8), do
+     tempQuot ← eval $ expression.quot ⇑ax (uext src 16),
+     tempRem  ← eval $ expression.rem  ⇑ax (uext src 16),
+     al .= tempQuot[[7..0]],
+     ah .= tempRem[[7..0]]
+   pat_end,
+   pattern λ(src : bv 16), do
+     tempQuot ← eval $ expression.quot (bv_cat ⇑dx ⇑ax) (uext src 32),
+     tempRem  ← eval $ expression.rem  (bv_cat ⇑dx ⇑ax) (uext src 32),
+     ax .= tempQuot[[15..0]],
+     dx .= tempRem[[15..0]]
+   pat_end,
+   pattern λ(src : bv 32), do
+     tempQuot ← eval $ expression.quot (bv_cat ⇑edx ⇑eax) (uext src 64),
+     tempRem  ← eval $ expression.rem  (bv_cat ⇑edx ⇑eax) (uext src 64),
+     eax .= tempQuot[[31..0]],
+     edx .= tempRem[[31..0]]
+   pat_end,
+   pattern λ(src : bv 64), do
+     tempQuot ← eval $ expression.quot (bv_cat ⇑rdx ⇑rax) (uext src 128),
+     tempRem  ← eval $ expression.rem  (bv_cat ⇑rdx ⇑rax) (uext src 128),
+     rax .= tempQuot[[63..0]],
+     rdx .= tempRem[[63..0]]
    pat_end
 
 ------------------------------------------------------------------------
