@@ -300,6 +300,16 @@ def nop : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- pause definition
+-- Spin Loop Hint
+
+def pause : instruction := do
+ definst "pause" $ do
+   pattern do
+     (return () : semantics unit)
+   pat_end
+
+------------------------------------------------------------------------
 -- div definition
 -- Unsigned Divide
 
