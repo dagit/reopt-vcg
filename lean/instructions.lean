@@ -80,11 +80,7 @@ def pop (w: ℕ) : semantics (bv w) := do
   rsp .= ⇑rsp + (nat_expr_to_bv w),
   return (uext temp w)
 
-def do_jmp (cond : bool) (addr : expression (bv 64)) : semantics unit :=
-  match cond with
-  | tt := record_event (event.jmp addr)
-  | _  := pure ()
-  end
+def do_jmp (cond : bit) (addr : expression (bv 64)) : semantics unit := sorry
 
 def do_xchg {w:ℕ} (addr1 : bv w) (addr2 : bv w) : semantics unit :=
   record_event (event.xchg addr1 addr2)
@@ -627,7 +623,7 @@ def call : instruction :=
 def jmp : instruction :=
  definst "jmp" $ do
    pattern λ(w : one_of [8, 16, 32, 64]) (v : bv w), do
-     do_jmp true (uext v 64)
+     do_jmp one (uext v 64)
    pat_end
 
 ------------------------------------------------------------------------
