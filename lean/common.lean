@@ -350,6 +350,10 @@ inductive prim : type → Type
 | quot (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 -- `(rem i)` returns the remainder of two i-bit numbers.
 | rem (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(squot i)` returns the signed quotient of two i-bit numbers.
+| squot (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(srem i)` returns the signed remainder of two i-bit numbers.
+| srem (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 -- `(slice w u l)` takes bits `u` through `l` out of a `w`-bit number.
 | slice (w:ℕ) (u:ℕ) (l:ℕ) : prim (bv w .→ bv (u+1-l))
 -- `(sext i o)` sign extends an `i`-bit number to a `o`-bit number.
@@ -389,6 +393,8 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (mul i) := "mul " ++ i.pp
 | ._ (quot i) := "quot " ++ i.pp
 | ._ (rem i) := "rem " ++ i.pp
+| ._ (squot i) := "squot " ++ i.pp
+| ._ (srem i) := "srem " ++ i.pp
 | ._ (slice w u l) := "slice " ++ w.pp ++ " " ++ u.pp ++ " " ++ l.pp
 | ._ (sext i o) := "sext " ++ i.pp ++ " " ++ o.pp
 | ._ (uext i o) := "uext " ++ i.pp ++ " " ++ o.pp
@@ -436,6 +442,8 @@ def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit →
 def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
 def quot {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
 def rem {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
+def signed_quot {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
+def signed_rem {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
 
 protected
 def is_app : Π{tp:type}, expression tp → bool

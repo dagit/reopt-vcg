@@ -290,6 +290,38 @@ def div : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- idiv definition
+-- Signed Divide
+
+def idiv : instruction := do
+ definst "idiv" $ do
+   -- TODO: would it be better to have a single div primitive?
+   pattern λ(src : bv 8), do
+     tempQuot ← eval $ expression.signed_quot ⇑ax (uext src 16),
+     tempRem  ← eval $ expression.signed_rem  ⇑ax (uext src 16),
+     al .= tempQuot[[7..0]],
+     ah .= tempRem[[7..0]]
+   pat_end,
+   pattern λ(src : bv 16), do
+     tempQuot ← eval $ expression.signed_quot (bv_cat ⇑dx ⇑ax) (uext src 32),
+     tempRem  ← eval $ expression.signed_rem  (bv_cat ⇑dx ⇑ax) (uext src 32),
+     ax .= tempQuot[[15..0]],
+     dx .= tempRem[[15..0]]
+   pat_end,
+   pattern λ(src : bv 32), do
+     tempQuot ← eval $ expression.signed_quot (bv_cat ⇑edx ⇑eax) (uext src 64),
+     tempRem  ← eval $ expression.signed_rem  (bv_cat ⇑edx ⇑eax) (uext src 64),
+     eax .= tempQuot[[31..0]],
+     edx .= tempRem[[31..0]]
+   pat_end,
+   pattern λ(src : bv 64), do
+     tempQuot ← eval $ expression.signed_quot (bv_cat ⇑rdx ⇑rax) (uext src 128),
+     tempRem  ← eval $ expression.signed_rem  (bv_cat ⇑rdx ⇑rax) (uext src 128),
+     rax .= tempQuot[[63..0]],
+     rdx .= tempRem[[63..0]]
+   pat_end
+
+------------------------------------------------------------------------
 -- and definition
 -- Logical AND
 
