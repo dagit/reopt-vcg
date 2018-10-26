@@ -272,6 +272,21 @@ def inc : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- neg definition
+-- Two's Complement Negation
+
+def neg : instruction := do
+ definst "neg" $ do
+   pattern λ(w : one_of [8,16,32,64]) (dest : lhs (bv w)), do
+     cf .= is_zero ⇑dest,
+     of .= ssub_overflows 0 ⇑dest,
+     af .= usub4_overflows 0 ⇑dest,
+     r ← eval $ -⇑dest,
+     set_result_flags r,
+     dest .= r
+   pat_end
+
+------------------------------------------------------------------------
 -- div definition
 -- Unsigned Divide
 

@@ -376,6 +376,8 @@ inductive prim : type → Type
 | eq (tp:type) : prim (tp .→ tp .→ bit)
 -- `(neq tp)` returns `true` if two values are not equal.
 | neq (tp:type) : prim (tp .→ tp .→ bit)
+-- `(neg tp)` Two's Complement negation.
+| neg (i:ℕ) : prim (bv i .→ bv i)
 -- `x87_fadd` adds two extended precision values using the flags in the x87 register.
 | x87_fadd : prim (x86_80 .→ x86_80 .→ x86_80)
 -- `float_to_x86_80` converts a float to an extended precision number (lossless)
@@ -406,6 +408,7 @@ def pp : Π{tp:type}, prim tp → string
 | ._ one  := "1"
 | ._ (eq tp) := "eq " ++ tp.pp
 | ._ (neq tp) := "neq " ++ tp.pp
+| ._ (neg tp) := "neg " ++ tp.pp
 | ._ x87_fadd := "x87_fadd"
 | ._ float_to_x86_80 := "float_to_x86_80"
 | ._ double_to_x86_80 := "double_to_X86_80"
@@ -437,6 +440,7 @@ instance (w:ℕ) : has_zero (expression (bv w)) := sorry
 instance (w:ℕ) : has_one  (expression (bv w)) := sorry
 instance (w:ℕ) : has_add  (expression (bv w)) := sorry
 instance (w:ℕ) : has_sub  (expression (bv w)) := sorry
+instance (w:ℕ) : has_neg  (expression (bv w)) := sorry
 
 def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit → expression (bv w) := sorry
 def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
