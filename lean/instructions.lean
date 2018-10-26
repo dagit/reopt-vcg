@@ -258,6 +258,20 @@ def dec : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- inc definition
+-- Increment by 1
+
+def inc : instruction := do
+ definst "inc" $ do
+   pattern λ(w : one_of [8,16,32,64]) (value : lhs (bv w)), do
+     temp ← eval $ ⇑value + 1,
+     of .= sadd_overflows temp 1,
+     af .= uadd4_overflows temp 1,
+     set_result_flags temp,
+     value .= temp
+   pat_end
+
+------------------------------------------------------------------------
 -- div definition
 -- Unsigned Divide
 
