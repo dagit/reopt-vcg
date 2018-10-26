@@ -287,6 +287,19 @@ def neg : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- nop definition
+-- No Operation
+
+def nop : instruction := do
+ definst "nop" $ do
+   pattern do
+     (return () : semantics unit)
+   pat_end,
+   pattern λ(w : one_of [16, 32]), do
+     (return () : semantics unit)
+   pat_end
+
+------------------------------------------------------------------------
 -- div definition
 -- Unsigned Divide
 
