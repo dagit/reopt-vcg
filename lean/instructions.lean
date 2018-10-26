@@ -519,6 +519,13 @@ def syscall : instruction :=
   definst "syscall" $ mk_pattern (record_event event.syscall)
 
 ------------------------------------------------------------------------
+-- hlt definition
+-- Halt
+
+def hlt : instruction :=
+  definst "hlt" $ mk_pattern (record_event event.hlt)
+
+------------------------------------------------------------------------
 -- lea definition
 -- Load Effective Address
 
