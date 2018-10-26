@@ -49,6 +49,10 @@ def set_result_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
 
 def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := sorry
 
+def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def usub4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def usub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+
 def uadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
@@ -56,6 +60,12 @@ def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))
 def uadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
 def uadc4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
 def sadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
+
+def do_cmp {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : semantics unit := do
+  of .= ssub_overflows x y,
+  af .= usub4_overflows x y,
+  cf .= usub_overflows x y,
+  set_result_flags (x - y)
 
 def nat_expr_to_bv {w:ℕ} (x : ℕ) : bv w := sorry
 
@@ -221,6 +231,30 @@ def cmps : instruction := do
  definst "cmps" $ sorry
    --pattern λ(w : one_of [8,16,32,64]) (dest : bv w) (src : bv w)
    --pat_end
+
+------------------------------------------------------------------------
+-- cmp definition
+-- Compare Two Operands
+
+def cmp : instruction := do
+ definst "cmp" $ do
+   pattern λ(u v : one_of [8,16,32,64]) (src1 : bv u) (src2 : bv v), do
+     do_cmp src1 (sext src2 u)
+   pat_end
+
+------------------------------------------------------------------------
+-- dec definition
+-- Decrement by 1
+
+def dec : instruction := do
+ definst "dec" $ do
+   pattern λ(w : one_of [8,16,32,64]) (value : lhs (bv w)), do
+     temp ← eval $ ⇑value - 1,
+     of .= ssub_overflows temp 1,
+     af .= usub4_overflows temp 1,
+     set_result_flags temp,
+     value .= temp
+   pat_end
 
 ------------------------------------------------------------------------
 -- and definition
@@ -538,6 +572,24 @@ def cdqe : instruction :=
  definst "cdqe" $ do
    pattern do
      rax .= sext ⇑eax 64
+   pat_end
+
+------------------------------------------------------------------------
+-- clc definition
+-- Clear Carry Flag
+def clc : instruction :=
+ definst "clc" $ do
+   pattern do
+     cf .= zero
+   pat_end
+
+------------------------------------------------------------------------
+-- cld definition
+-- Clear Direction Flag
+def cld : instruction :=
+ definst "cld" $ do
+   pattern do
+     df .= zero
    pat_end
 
 end x86

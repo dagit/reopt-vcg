@@ -358,6 +358,10 @@ inductive prim : type → Type
 | bsr   (i:ℕ) : prim (bv i .→ bv i)
 -- `(bswap i)` reverses the bytes in the bitvector.
 | bswap (i:ℕ) : prim (bv i .→ bv i)
+-- `zero` is the zero bit
+| zero : prim bit
+-- `one` is the one bit
+| one : prim bit
 -- `(eq tp)` returns `true` if two values are equal.
 | eq (tp:type) : prim (tp .→ tp .→ bit)
 -- `(neq tp)` returns `true` if two values are not equal.
@@ -384,6 +388,8 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (bsf i) := "bsf " ++ i.pp
 | ._ (bsr i) := "bsr " ++ i.pp
 | ._ (bswap i) := "bswap " ++ i.pp
+| ._ zero := "0"
+| ._ one  := "1"
 | ._ (eq tp) := "eq " ++ tp.pp
 | ._ (neq tp) := "neq " ++ tp.pp
 | ._ x87_fadd := "x87_fadd"
@@ -463,6 +469,9 @@ def sext {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.sext w o x
 def uext {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.uext w o x
 
 def neq {tp:type} (x y : tp) : bit := prim.neq tp x y
+
+def one  : bit := prim.one
+def zero : bit := prim.zero
 
 instance bv_has_mul (w:nat_expr) : has_mul (bv w) := ⟨λx y, prim.mul w x y⟩
 
