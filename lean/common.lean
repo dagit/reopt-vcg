@@ -492,6 +492,8 @@ def uext {w:nat_expr} (x: bv w) (o:nat_expr) : bv o := prim.uext w o x
 
 def neq {tp:type} (x y : tp) : bit := prim.neq tp x y
 
+def eq {tp:type} (x y : tp) : bit := prim.eq tp x y
+
 def one  : bit := prim.one
 def zero : bit := prim.zero
 

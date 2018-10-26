@@ -17,6 +17,8 @@ local notation x `[[`:1025 h `..` l `]]` := slice x h l
 
 local infix ≠ := neq
 
+local infix = := eq
+
 local notation `⇑`:max x:max := coe1 x
 
 local notation ℕ := nat_expr
