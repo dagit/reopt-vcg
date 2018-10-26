@@ -585,6 +585,17 @@ def ret : instruction :=
    pat_end
 
 ------------------------------------------------------------------------
+-- leave definition
+-- High Level Procedure Exit
+def leave : instruction :=
+ definst "leave" $ do
+   pattern do
+     rsp .= ⇑rbp,
+     v ← pop 64,
+     rbp .= v
+   pat_end
+
+------------------------------------------------------------------------
 -- pop definition
 -- Pop a Value from the Stack
 def pop_def : instruction :=
