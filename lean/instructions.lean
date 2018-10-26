@@ -386,6 +386,20 @@ def not : instruction := do
    pat_end
 
 ------------------------------------------------------------------------
+-- or definition
+-- Logical Inclusive OR
+
+def or : instruction := do
+ definst "or" $ do
+   pattern λ(u v : one_of [8, 16, 32, 64]) (dest : lhs (bv u)) (src : bv v), do
+     dest .= ⇑dest .|. sext src u,
+     set_undefined af,
+     of .= zero,
+     cf .= zero,
+     set_result_flags ⇑dest
+   pat_end
+
+------------------------------------------------------------------------
 -- bt definition
 -- Bit Test
 
