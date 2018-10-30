@@ -400,6 +400,19 @@ inductive prim : type → Type
 | usbb_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
 | uadc_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
 | sadc_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
+| and (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+| or (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+| xor (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+| shl (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(bvbit i)` interprets the second argument as a bit index and returns
+-- that bit from the first argument.
+| bvbit (i:ℕ) : prim (bv i .→ bv i .→ bit)
+| complement (i:ℕ) : prim (bv i .→ bv i)
+| bvcat (i:ℕ) : prim (bv i .→ bv i .→ bv (2*i))
+| bv_least_nibble (i:ℕ) : prim (bv i .→ bv 4)
+| msb (i:ℕ) : prim (bv i .→ bit)
+| least_byte (i:ℕ) : prim (bv i .→ bv 8)
+| even_parity (i:ℕ) : prim (bv i .→ bit)
 
 namespace prim
 
@@ -434,6 +447,18 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (usbb_overflows i) := "usbb_overflows " ++ i.pp
 | ._ (uadc_overflows i) := "uadc_overflows " ++ i.pp
 | ._ (sadc_overflows i) := "sadc_overflows " ++ i.pp
+| ._ (and i) := "and " ++ i.pp
+| ._ (or i) := "or " ++ i.pp
+| ._ (xor i) := "xor " ++ i.pp
+| ._ (shl i) := "shl " ++ i.pp
+| ._ (bvbit i) := "bvbit " ++ i.pp
+| ._ (complement i) := "complement " ++ i.pp
+| ._ (bvcat i) := "bvcat " ++ i.pp
+| ._ (bv_least_nibble i) := "bv_least_nibble" ++ i.pp
+| ._ (msb i) := "msb " ++ i.pp
+| ._ (least_byte i) := "least_byte " ++ i.pp
+| ._ (even_parity i) := "even_parity " ++ i.pp
+
 
 end prim
 

@@ -31,23 +31,19 @@ infix `.=`:20 := set
 -- `off` is the index of the bit to return.
 -- TODO: figure out how to handle out of bounds and any other edge cases and document the
 -- assumptions.
-def bv_bit {w:ℕ} (base : bv w) (off : bv w) : bit := sorry
-def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := sorry
-def bv_shl {w:ℕ} (b : bv w) (y : bv w) : bv w := sorry
-def bv_complement {w:ℕ} (b : bv w) : bv w := sorry
-def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
-def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
-def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
-def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
-def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := sorry
-def bv_least_nibble {w:ℕ} (x : bv w) : bv 4 := sorry
+def bv_bit {w:ℕ} (base : bv w) (off : bv w) : bit := prim.bvbit w base off
+def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := prim.xor w x y
+def bv_shl {w:ℕ} (x : bv w) (y : bv w) : bv w := prim.shl w x y
+def bv_complement {w:ℕ} (b : bv w) : bv w := prim.complement w b
+def bv_is_zero {w:ℕ} (b : bv w) : bit := b = 0
+def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := prim.and w x y
+def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := prim.or w x y
+def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := prim.bvcat w x y
+def bv_least_nibble {w:ℕ} (x : bv w) : bv 4 := prim.bv_least_nibble w x
 
-def msb {w:ℕ} (v : bv w) : bit := sorry
-def is_zero {w:ℕ} (v : bv w) : bit := sorry
-def least_byte {w:ℕ} (v : bv w) : bv 8 := sorry
-def even_parity {w:ℕ} (v : bv w) : bit := sorry
-
-def nat_to_bv {w:ℕ} (x : nat) : bv w := sorry
+def msb {w:ℕ} (v : bv w) : bit := prim.msb w v
+def least_byte {w:ℕ} (v : bv w) : bv 8 := prim.least_byte w v
+def even_parity {w:ℕ} (v : bv w) : bit := prim.even_parity w v
 
 infixl `.|.`:65 := bv_or
 infixl `.&.`:70 := bv_and
@@ -55,7 +51,7 @@ infixl `.&.`:70 := bv_and
 ------------------------------------------------------------------------
 -- utility functions
 
-def nat_expr_to_bv {w:ℕ} (n:ℕ) : bv w := prim.bvnat w n
+def nat_to_bv {w:ℕ} (n:ℕ) : bv w := prim.bvnat w n
 
 def set_undefined {tp:type} (v : lhs tp) : semantics unit := do
   semantics.add_action (action.mk_undef v)
@@ -70,7 +66,7 @@ def set_overflow (b:bit) : semantics unit := do
 
 def set_result_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
   sf .= msb res,
-  zf .= is_zero res,
+  zf .= bv_is_zero res,
   pf .= even_parity (least_byte res)
 
 def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
@@ -101,14 +97,14 @@ def do_cmp {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : semantics u
   set_result_flags (x - y)
 
 def push {w: one_of [8, 16, 32, 64]} (value : expression (bv w)) : semantics unit := do
-  rsp .= ⇑rsp - (nat_expr_to_bv (one_of.to_nat_expr w)),
+  rsp .= ⇑rsp - (nat_to_bv (one_of.to_nat_expr w)),
   ⇑rsp .= uext value 64,
   return ()
 
--- def pop (w: one_of [8,16,32,64]) : semantics (expression (bv w)) := do
-def pop (w: ℕ) : semantics (bv w) := do
+def pop (w: ℕ) (additional : bv 16) : semantics (bv w) := do
   temp ← eval ⇑rsp,
-  rsp .= ⇑rsp + (nat_expr_to_bv w),
+  let count := nat_to_bv w + uext additional 64 in do
+  rsp .= ⇑rsp + count,
   return (uext temp w)
 
 def do_jmp (cond : bit) (addr : expression (bv 64)) : semantics unit :=
@@ -197,8 +193,8 @@ def mov : instruction := do
 -- mov definition
 -- Move Data from String to String
 
-def movs : instruction := do
- definst "movs" $ do sorry
+-- def movs : instruction := do
+--  definst "movs" $ do sorry
 
 ------------------------------------------------------------------------
 -- movsx definition
@@ -243,8 +239,8 @@ def xchg : instruction := do
 -- cmps definition
 -- Compare String Operands
 
-def cmps : instruction := do
- definst "cmps" $ sorry
+-- def cmps : instruction := do
+--  definst "cmps" $ sorry
    --pattern λ(w : one_of [8,16,32,64]) (dest : bv w) (src : bv w)
    --pat_end
 
@@ -312,7 +308,7 @@ def inc : instruction := do
 def neg : instruction := do
  definst "neg" $ do
    pattern λ(w : one_of [8,16,32,64]) (dest : lhs (bv w)), do
-     cf .= is_zero ⇑dest,
+     cf .= bv_is_zero ⇑dest,
      of .= ssub_overflows 0 ⇑dest,
      af .= usub4_overflows 0 ⇑dest,
      r ← eval $ -⇑dest,
@@ -670,13 +666,12 @@ def jmp : instruction :=
 def ret : instruction :=
  definst "ret" $ do
    pattern do
-     -- pop (one_of.var 64),
-     pop 64,
+     pop 64 0,
+     -- pop 64,
      record_event event.ret
    pat_end,
-   pattern λ(off : (bv 16)), do
-     -- pop (one_of.var (64 + bv_to_nat off)),
-     pop (64 + bv_to_nat off),
+   pattern λ(off : bv 16), do
+     pop 64 off,
      record_event event.ret
    pat_end
 
@@ -687,7 +682,7 @@ def leave : instruction :=
  definst "leave" $ do
    pattern do
      rsp .= ⇑rbp,
-     v ← pop 64,
+     v ← pop 64 0,
      rbp .= v
    pat_end
 
@@ -697,7 +692,7 @@ def leave : instruction :=
 def pop_def : instruction :=
  definst "pop" $ do
    pattern λ(w : one_of [16, 32, 64]) (dest: lhs (bv w)),do
-     v ← pop w,
+     v ← pop (one_of.to_nat_expr w) 0,
      dest .= v
    pat_end
 
