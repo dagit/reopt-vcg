@@ -59,7 +59,7 @@ protected def do_add : nat_expr → nat_expr → nat_expr
 | (lit x) (lit y) := lit (x+y)
 | x y := add x y
 
-protected def do_sub : nat_expr → nat_expr → nat_expr
+def do_sub : nat_expr → nat_expr → nat_expr
 | (lit x) (lit y) := lit (x-y)
 | x y := sub x y
 
@@ -386,8 +386,20 @@ inductive prim : type → Type
 | double_to_x86_80 : prim (double .→ x86_80)
 -- `bv_to_x86_80` converts a bitvector to an extended precision number (lossless)
 | bv_to_x86_80  (w : one_of [16,32]) : prim (bv w .→ x86_80)
+-- `bvzero` constructs a zero bv of length i.
+-- | bvzero (i:ℕ) : prim (bv i)
+-- `bvone` constructs a bv with value 1 of length i.
+-- | bvone (i:ℕ) : prim (bv i)
+-- | bvlit (i:ℕ) : bv i → prim (bv i)
+| bvnat (w:ℕ) : ℕ → prim (bv w)
+| bvadd (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+| bvsub (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 
 namespace prim
+
+--def bvadd {w:ℕ} : prim (bv w) → prim (bv w) → prim (bv w)
+--  | (prim.bvnat ._ n) (prim.bvnat ._ m) := prim.bvnat w (n+m)
+--  | x y := prim.bvadd (λ(m)(n), m + n)
 
 def pp : Π{tp:type}, prim tp → string
 | ._ (add i) := "add " ++ i.pp
@@ -413,6 +425,11 @@ def pp : Π{tp:type}, prim tp → string
 | ._ float_to_x86_80 := "float_to_x86_80"
 | ._ double_to_x86_80 := "double_to_X86_80"
 | ._ (bv_to_x86_80 w) := "sext " ++ w.pp
+| ._ (bvnat w n) := "bvnat " ++ n.pp
+| ._ (bvadd i) := "bvadd " ++ i.pp
+| ._ (bvsub i) := "bvsub " ++ i.pp
+-- | ._ (bvzero i) := "bvzero " ++ i.pp
+-- | ._ (bvone i) := "bvone " ++ i.pp
 
 end prim
 
@@ -436,18 +453,29 @@ instance (a:type) (f:type) : has_coe_to_fun (expression (type.fn a f)) :=
 , coe := app
 }
 
-instance (w:ℕ) : has_zero (expression (bv w)) := sorry
-instance (w:ℕ) : has_one  (expression (bv w)) := sorry
-instance (w:ℕ) : has_add  (expression (bv w)) := sorry
-instance (w:ℕ) : has_sub  (expression (bv w)) := sorry
-instance (w:ℕ) : has_neg  (expression (bv w)) := sorry
+def bvadd : Π{w:ℕ}, expression (bv w) → expression (bv w) → expression (bv w)
+  | ._ (primitive (prim.bvnat ._ n)) (primitive (prim.bvnat w m)) := prim.bvnat w (n + m)
+  | i x y := prim.bvadd i x y
 
-def adc {w:ℕ} : expression (bv w) → expression (bv w) → expression bit → expression (bv w) := sorry
-def bswap {w:ℕ} : expression (bv w) → expression (bv w) := sorry
-def quot {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
-def rem {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
-def signed_quot {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
-def signed_rem {w:ℕ} : expression (bv w) → expression (bv w) → expression (bv w) := sorry
+def bvsub : Π{w:ℕ}, expression (bv w) → expression (bv w) → expression (bv w)
+  | ._ (primitive (prim.bvnat ._ n)) (primitive (prim.bvnat w m)) := prim.bvnat w (n - m)
+  | i x y := prim.bvsub i x y
+
+def bvneg : Π{w:ℕ}, expression (bv w) → expression (bv w)
+  | _ x := app (primitive (prim.neg _)) x
+
+instance (w:ℕ) : has_zero (expression (bv w)) := ⟨prim.bvnat w 0⟩
+instance (w:ℕ) : has_one  (expression (bv w)) := ⟨prim.bvnat w 1⟩
+instance (w:ℕ) : has_add  (expression (bv w)) := ⟨bvadd⟩
+instance (w:ℕ) : has_sub  (expression (bv w)) := ⟨bvsub⟩
+instance (w:ℕ) : has_neg  (expression (bv w)) := ⟨bvneg⟩
+
+def adc         {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) (b : expression bit) : expression (bv w) := prim.adc   w x y b
+def bswap       {w:ℕ} (v : expression (bv w))                                              : expression (bv w) := prim.bswap w v
+def quot        {w:ℕ} (x : expression (bv w)) (y : expression (bv w))                      : expression (bv w) := prim.quot  w x y
+def rem         {w:ℕ} (x : expression (bv w)) (y : expression (bv w))                      : expression (bv w) := prim.rem   w x y
+def signed_quot {w:ℕ} (x : expression (bv w)) (y : expression (bv w))                      : expression (bv w) := prim.squot w x y
+def signed_rem  {w:ℕ} (x : expression (bv w)) (y : expression (bv w))                      : expression (bv w) := prim.srem  w x y
 
 protected
 def is_app : Π{tp:type}, expression tp → bool
