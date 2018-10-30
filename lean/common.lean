@@ -386,20 +386,14 @@ inductive prim : type → Type
 | double_to_x86_80 : prim (double .→ x86_80)
 -- `bv_to_x86_80` converts a bitvector to an extended precision number (lossless)
 | bv_to_x86_80  (w : one_of [16,32]) : prim (bv w .→ x86_80)
--- `bvzero` constructs a zero bv of length i.
--- | bvzero (i:ℕ) : prim (bv i)
--- `bvone` constructs a bv with value 1 of length i.
--- | bvone (i:ℕ) : prim (bv i)
--- | bvlit (i:ℕ) : bv i → prim (bv i)
+-- `bvnat` constructs a bit vector from a natural number.
 | bvnat (w:ℕ) : ℕ → prim (bv w)
+-- `(bvadd i)` adds two i-bit bitvectors.
 | bvadd (i:ℕ) : prim (bv i .→ bv i .→ bv i)
+-- `(bvsub i)` substracts two i-bit bitvectors.
 | bvsub (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 
 namespace prim
-
---def bvadd {w:ℕ} : prim (bv w) → prim (bv w) → prim (bv w)
---  | (prim.bvnat ._ n) (prim.bvnat ._ m) := prim.bvnat w (n+m)
---  | x y := prim.bvadd (λ(m)(n), m + n)
 
 def pp : Π{tp:type}, prim tp → string
 | ._ (add i) := "add " ++ i.pp
