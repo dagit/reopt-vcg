@@ -392,9 +392,14 @@ inductive prim : type → Type
 | bvadd (i:ℕ) : prim (bv i .→ bv i .→ bv i)
 -- `(bvsub i)` substracts two i-bit bitvectors.
 | bvsub (i:ℕ) : prim (bv i .→ bv i .→ bv i)
--- `(ssb_overflows i)` true if unsigned sub overflows, the bit
+-- `(ssbb_overflows i)` true if signed sub overflows, the bit
 -- is a borrow bit.
 | ssbb_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
+-- `(usbb_overflows i)` true if unsigned sub overflows,
+-- the bit is a borrow bit.
+| usbb_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
+| uadc_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
+| sadc_overflows (i:ℕ) : prim (bv i .→ bv i .→ bit .→ bit)
 
 namespace prim
 
@@ -426,6 +431,9 @@ def pp : Π{tp:type}, prim tp → string
 | ._ (bvadd i) := "bvadd " ++ i.pp
 | ._ (bvsub i) := "bvsub " ++ i.pp
 | ._ (ssbb_overflows i) := "ssbb_overflows " ++ i.pp
+| ._ (usbb_overflows i) := "usbb_overflows " ++ i.pp
+| ._ (uadc_overflows i) := "uadc_overflows " ++ i.pp
+| ._ (sadc_overflows i) := "sadc_overflows " ++ i.pp
 
 end prim
 

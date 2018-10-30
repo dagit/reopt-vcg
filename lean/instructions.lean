@@ -40,6 +40,7 @@ def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression 
 def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
 def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
 def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := sorry
+def bv_least_nibble {w:ℕ} (x : bv w) : bv 4 := sorry
 
 def msb {w:ℕ} (v : bv w) : bit := sorry
 def is_zero {w:ℕ} (v : bv w) : bit := sorry
@@ -78,23 +79,20 @@ def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
   set_undefined af,
   set_result_flags res
 
--- | Return true expression if unsigned sub overflows.
--- @ssbb_overflows x y c@ is true when @x - (y+c)@ with
--- x,y interpreted as signed numbers and c a borrow bit,
--- would return a number different from the expected integer due to
--- wrap-around.
-def ssbb_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (b : bit) : bit := prim.ssbb_overflows w dest src b
-def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := ssbb_overflows dest src zero
-def usub4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
-def usub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def ssbb_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (borrow : bit) : bit := prim.ssbb_overflows w dest src borrow
+def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))                : bit := ssbb_overflows dest src zero
 
-def uadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
-def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
-def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+def usbb_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (borrow : bit) : bit := prim.usbb_overflows w dest src borrow
+def usub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))                : bit := usbb_overflows dest src zero
+def usub4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))                : bit := usub_overflows (bv_least_nibble dest) (bv_least_nibble src)
 
-def uadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
-def uadc4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
-def sadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : expression bit) : bit := sorry
+def uadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : bit) : bit := prim.uadc_overflows w dest src carry
+def uadc4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : bit) : bit := uadc_overflows (bv_least_nibble dest) (bv_least_nibble src) carry
+def uadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))               : bit := uadc_overflows dest src zero
+def uadd4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))               : bit := uadd_overflows (bv_least_nibble dest) (bv_least_nibble src)
+
+def sadc_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (carry : bit) : bit := prim.sadc_overflows w dest src carry
+def sadd_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w))               : bit := sadc_overflows dest src zero
 
 def do_cmp {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : semantics unit := do
   of .= ssub_overflows x y,
