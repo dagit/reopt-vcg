@@ -78,7 +78,13 @@ def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
   set_undefined af,
   set_result_flags res
 
-def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
+-- | Return true expression if unsigned sub overflows.
+-- @ssbb_overflows x y c@ is true when @x - (y+c)@ with
+-- x,y interpreted as signed numbers and c a borrow bit,
+-- would return a number different from the expected integer due to
+-- wrap-around.
+def ssbb_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) (b : bit) : bit := prim.ssbb_overflows w dest src b
+def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := ssbb_overflows dest src zero
 def usub4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 def usub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 
