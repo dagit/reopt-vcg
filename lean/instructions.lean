@@ -26,12 +26,35 @@ local notation ℕ := nat_expr
 infix `.=`:20 := set
 
 ------------------------------------------------------------------------
--- utility functions
+-- bitvector functions
+
+-- `off` is the index of the bit to return.
+-- TODO: figure out how to handle out of bounds and any other edge cases and document the
+-- assumptions.
+def bv_bit {w:ℕ} (base : bv w) (off : bv w) : bit := sorry
+def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := sorry
+def bv_shl {w:ℕ} (b : bv w) (y : bv w) : bv w := sorry
+def bv_complement {w:ℕ} (b : bv w) : bv w := sorry
+def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
+def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
+def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
+def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
+def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := sorry
 
 def msb {w:ℕ} (v : bv w) : bit := sorry
 def is_zero {w:ℕ} (v : bv w) : bit := sorry
 def least_byte {w:ℕ} (v : bv w) : bv 8 := sorry
 def even_parity {w:ℕ} (v : bv w) : bit := sorry
+
+def nat_to_bv {w:ℕ} (x : nat) : bv w := sorry
+
+infixl `.|.`:65 := bv_or
+infixl `.&.`:70 := bv_and
+
+------------------------------------------------------------------------
+-- utility functions
+
+def nat_expr_to_bv {w:ℕ} (n:ℕ) : bv w := prim.bvnat w n
 
 def set_undefined {tp:type} (v : lhs tp) : semantics unit := do
   semantics.add_action (action.mk_undef v)
@@ -49,7 +72,11 @@ def set_result_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
   zf .= is_zero res,
   pf .= even_parity (least_byte res)
 
-def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := sorry
+def set_bitwise_flags {w:ℕ} (res : expression (bv w)) : semantics unit := do
+  of .= zero,
+  cf .= zero,
+  set_undefined af,
+  set_result_flags res
 
 def ssub_overflows  {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
 def usub4_overflows {w:ℕ} (dest : expression (bv w)) (src : expression (bv w)) : bit := sorry
@@ -69,8 +96,6 @@ def do_cmp {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : semantics u
   cf .= usub_overflows x y,
   set_result_flags (x - y)
 
-def nat_expr_to_bv {w:ℕ} (x : ℕ) : bv w := sorry
-
 def push {w: one_of [8, 16, 32, 64]} (value : expression (bv w)) : semantics unit := do
   rsp .= ⇑rsp - (nat_expr_to_bv (one_of.to_nat_expr w)),
   ⇑rsp .= uext value 64,
@@ -82,26 +107,14 @@ def pop (w: ℕ) : semantics (bv w) := do
   rsp .= ⇑rsp + (nat_expr_to_bv w),
   return (uext temp w)
 
-def do_jmp (cond : bit) (addr : expression (bv 64)) : semantics unit := sorry
+def do_jmp (cond : bit) (addr : expression (bv 64)) : semantics unit :=
+  match cond with
+  | prim.one := record_event (event.jmp addr)
+  | _        := return ()
+  end
 
 def do_xchg {w:ℕ} (addr1 : bv w) (addr2 : bv w) : semantics unit :=
   record_event (event.xchg addr1 addr2)
-
--- `off` is the index of the bit to return.
--- TODO: figure out how to handle out of bounds and any other edge cases and document the
--- assumptions.
-def bv_bit {w:ℕ} (base : bv w) (off : bv w) : bit := sorry
-def bv_xor {w:ℕ} (x : bv w) (y : bv w) : bv w := sorry
-def bv_shl {w:ℕ} (b : bv w) (y : bv w) : bv w := sorry
-def bv_complement {w:ℕ} (b : bv w) : bv w := sorry
-def bv_is_zero {w:ℕ} (b : bv w) : bit := sorry
-def bv_and {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
-def bv_or  {w:ℕ} (x : expression (bv w)) (y : expression (bv w)) : expression (bv w) := sorry
-def bv_to_nat {w:ℕ} (x : bv w) : nat := sorry
-def bv_cat {w:ℕ} (x : bv w) (y : bv w) : bv (2*w) := sorry
-
-infixl `.|.`:65 := bv_or
-infixl `.&.`:70 := bv_and
 
 ------------------------------------------------------------------------
 -- imul definition
