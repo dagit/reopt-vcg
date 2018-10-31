@@ -837,5 +837,4 @@ end x86
 open x86
 
 def main : io unit := do
-  io.put_str_ln "Hello, World!",
   monad.mapm' (io.put_str_ln ∘ repr) all_instructions
