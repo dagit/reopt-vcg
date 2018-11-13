@@ -137,7 +137,7 @@ section shift
 
   -- signed shift right
   @[reducible]
-  def sshr {Hn: n > 0} (x: bitvec n) (i:ℕ) {Hi_lt_n: i ≤ n} : bitvec n :=
+  def sshr (x: bitvec n) (i:ℕ) {Hi_lt_n: i ≤ n} : bitvec n :=
     -- When the sign bit is set in x, (msb x = 1), then we would like
     -- the result of sshr x i, to have the top i bits set.
     -- We can calculate a number that will do this in steps:
