@@ -137,7 +137,7 @@ section shift
 
   -- signed shift right
   @[reducible]
-  def sshr {Hn: n > 0} (x: bitvec n) (i:ℕ) {Hi_lt_n: i ≤ n} {Hzero_lt_0 : 0 < i} : bitvec n :=
+  def sshr {Hn: n > 0} (x: bitvec n) (i:ℕ) {Hi_lt_n: i ≤ n} : bitvec n :=
     -- When the sign bit is set in x, (msb x = 1), then we would like
     -- the result of sshr x i, to have the top i bits set.
     -- We can calculate a number that will do this in steps:
@@ -146,8 +146,10 @@ section shift
     -- 3) subtract the previous two numbers (1) - (2), to get a
     -- number where only the top i bits are set.
     let upper_bits := 2 ^ n - 2 ^ (n-i) in
-    ⟨ ((ushr x i).val + if (msb x) then upper_bits else 0),
+    let sign := if msb x then upper_bits else 0 in
+    ⟨ sign + (ushr x i).val,
       begin
+        simp [sign],
         cases (msb x),
         case bool.ff
         { simp [ushr],
@@ -156,21 +158,24 @@ section shift
                     ... < 2^n   : x.property
         },
         case bool.tt
-        { simp [upper_bits, ushr],
-          have : x.val/2^i < 2^(n-i),
-          { apply div_lt_of_lt_mul,
-            apply pos_pow_of_pos,
-            dec_trivial_tac,
-            rw [pow_mul, add_sub_of_le],
-            apply x.property,
-            apply Hi_lt_n,
+        { simp [upper_bits, sign, ushr],
+          cases i,
+          { simp, rw nat.sub_self (2^n), simp, exact x.property },
+          { have : x.val/2^succ i < 2^(n-succ i),
+            { apply div_lt_of_lt_mul,
+              apply pos_pow_of_pos,
+              dec_trivial_tac,
+              rw [pow_mul, add_sub_of_le],
+              apply x.property,
+              exact Hi_lt_n
+            },
+            apply sub_add_big_med_small (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
+            have : 2^n > 2^(n-succ i),
+            { apply pow_lt_pow_of_lt_right (lt_succ_self _)
+                                           (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) Hi_lt_n)
+            },
+            assumption
           },
-          apply sub_add_big_med_small (2^n) (2^(n-i)) (x.val/2^i) _ this,
-          have : 2^n > 2^(n-i),
-          { apply pow_lt_pow_of_lt_right (lt_succ_self _)
-                                         (sub_lt_of_pos_le _ _ Hzero_lt_0 Hi_lt_n)
-          },
-          assumption
         }
       end⟩
 
