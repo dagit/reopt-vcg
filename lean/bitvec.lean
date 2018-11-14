@@ -89,7 +89,7 @@ lemma sub_lt_left {a b} (c:ℕ) (H: a < b) (Ha: a > c) : a - c < b - c :=
     }
   end
 
-lemma sub_add_big_med_small (a b c : ℕ) (Hab: a > b) (Hbc : b > c) : a - b + c < a :=
+lemma sub_add_lt_self (a b c : ℕ) (Hab: a > b) (Hbc : b > c) : a - b + c < a :=
   begin
     induction c with c generalizing a b,
     case nat.zero
@@ -172,8 +172,12 @@ section shift
               x.val < 2^n : x.property
                 ... ≤ 2^i : pow_le_pow_of_le_right (by dec_trivial_tac) this
           },
-          { cases i,
+          { cases i, -- This is slightly annoying, but we need to prove
+                     -- the i = 0 case separately so we can apply
+                     -- pow_lt_pow_of_lt_right in the other case.
+            -- case nat.zero
             { simp, rw nat.sub_self (2^n), simp, exact x.property },
+            -- case nat.succ
             { have i_lt_n : succ i ≤ n,
               { apply le_of_not_ge this },
               have : x.val/2^succ i < 2^(n-succ i),
@@ -184,13 +188,13 @@ section shift
                 apply x.property,
                 apply i_lt_n
               },
-              apply sub_add_big_med_small (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
+              apply sub_add_lt_self (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
               have : 2^n > 2^(n-succ i),
               { apply pow_lt_pow_of_lt_right (lt_succ_self _)
                                              (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) i_lt_n)
               },
               assumption
-            },
+            }
           }
         }
       end⟩
