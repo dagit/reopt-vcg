@@ -173,7 +173,8 @@ section shift
                 ... ≤ 2^i : pow_le_pow_of_le_right (by dec_trivial_tac) this
           },
           { cases i, -- This is slightly annoying, but we need to prove
-                     -- the i = 0 case separately so we can apply
+                     -- the i = 0 case separately so we can use i > 0
+                     -- for sub_lt_of_pos_le as the argument to
                      -- pow_lt_pow_of_lt_right in the other case.
             -- case nat.zero
             { simp, rw nat.sub_self (2^n), simp, exact x.property },
@@ -189,11 +190,8 @@ section shift
                 apply i_lt_n
               },
               apply sub_add_lt_self (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
-              have : 2^n > 2^(n-succ i),
-              { apply pow_lt_pow_of_lt_right (lt_succ_self _)
-                                             (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) i_lt_n)
-              },
-              assumption
+              apply pow_lt_pow_of_lt_right (lt_succ_self _)
+                                           (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) i_lt_n)
             }
           }
         }
