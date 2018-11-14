@@ -199,6 +199,20 @@ section shift
 
 end shift
 
+/- JED: I thought this might be useful but I haven't needed it yet...
+lemma sub_le_of_pos_lt (a b : ℕ) (h : a < b) : b - a ≤ b :=
+  begin
+    cases a,
+    case nat.zero
+    { simp },
+    case nat.succ
+    { have : b - succ a < b,
+      { apply sub_lt_of_pos_le (succ a) b (zero_lt_succ _) (le_of_lt h) },
+      apply le_of_lt this
+    }
+  end
+-/
+
 section bitwise
 
   -- A fixed width version of nat.bitwise
@@ -262,9 +276,19 @@ section arith
   protected def carry (x y c : bool) :=
   x && y || x && c || y && c
 
+  @[reducible]
   protected def neg (x : bitvec n) : bitvec n :=
-  let f := λ y c, (y || c, bxor y c) in
-  prod.snd (map_accumr f x ff)
+    ⟨if x.val = 0 then 0 else 2^n - x.val,
+     begin
+       by_cases (x.val = 0),
+       { simp [h], apply pos_pow_of_pos, dec_trivial_tac },
+       { simp [h],
+         have pos : 0 < 2^n - x.val, { apply nat.sub_pos_of_lt x.property },
+         have x_val_pos: 0 < x.val, { apply nat.pos_of_ne_zero h },
+         apply sub_lt_of_pos_le x.val (2^n) x_val_pos,
+         apply le_of_lt x.property,
+       }
+      end⟩
 
   -- Add with carry (no overflow)
   def adc (x y : bitvec n) (c : bool) : bitvec (n+1) :=
