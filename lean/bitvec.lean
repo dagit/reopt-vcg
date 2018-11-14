@@ -291,12 +291,12 @@ section arith
       end⟩
 
   -- Add with carry (no overflow)
-  def adc (x y : bitvec n) (c : bool) : bitvec (n+1) :=
-  let f := λ x y c, (bitvec.carry x y c, bitvec.xor3 x y c) in
-  let ⟨c, z⟩ := vector.map_accumr₂ f x y c in
-  c :: z
+  def adc (x y : bitvec n) (c : bool) : bitvec n × bool :=
+    let c₁ := if c then 1 else 0,
+        r  := x.val + y.val + c₁ in
+    ⟨ ⟨r % 2^n, by simp [in_range] ⟩, r ≥ 2^n ⟩
 
-  protected def add (x y : bitvec n) : bitvec n := tail (adc x y ff)
+  protected def add (x y : bitvec n) : bitvec n := (adc x y ff).1
 
   -- Subtract with borrow
   def sbb (x y : bitvec n) (b : bool) : bool × bitvec n :=
