@@ -47,7 +47,7 @@ lemma in_range (x n : ℕ) : x % 2 ^ n < 2 ^ n :=
     simp [zero_lt_succ]
   end
 
-lemma div_lt_of_lt_mul {m n : ℕ} : ∀ {k} {Hk : k > 0}, m < k * n → m / k < n
+lemma div_lt_of_lt_mul {m n : ℕ} : ∀ {k} (Hk : k > 0), m < k * n → m / k < n
   | 0        Hk h := by apply absurd Hk (lt_irrefl 0)
   | (succ k) Hk h :=
     suffices succ k * (m / succ k) < succ k * n, from lt_of_mul_lt_mul_left this (zero_le _),
@@ -137,7 +137,7 @@ section shift
 
   -- signed shift right
   @[reducible]
-  def sshr (x: bitvec n) (i:ℕ) {Hi_lt_n: i ≤ n} : bitvec n :=
+  def sshr (x: bitvec n) (i:ℕ) : bitvec n :=
     -- When the sign bit is set in x, (msb x = 1), then we would like
     -- the result of sshr x i, to have the top i bits set.
     -- We can calculate a number that will do this in steps:
@@ -159,23 +159,39 @@ section shift
         },
         case bool.tt
         { simp [upper_bits, sign, ushr],
-          cases i,
-          { simp, rw nat.sub_self (2^n), simp, exact x.property },
-          { have : x.val/2^succ i < 2^(n-succ i),
-            { apply div_lt_of_lt_mul,
-              apply pos_pow_of_pos,
-              dec_trivial_tac,
-              rw [pow_mul, add_sub_of_le],
-              apply x.property,
-              exact Hi_lt_n
-            },
-            apply sub_add_big_med_small (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
-            have : 2^n > 2^(n-succ i),
-            { apply pow_lt_pow_of_lt_right (lt_succ_self _)
-                                           (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) Hi_lt_n)
-            },
-            assumption
+          by_cases this : n ≤ i,
+          { rw nat.sub_eq_zero_of_le this,
+            simp,
+            rw div_eq_of_lt,
+            simp,
+            apply sub_lt_of_pos_le,
+            dec_trivial_tac,
+            apply pos_pow_of_pos,
+            dec_trivial_tac,
+            calc
+              x.val < 2^n : x.property
+                ... ≤ 2^i : pow_le_pow_of_le_right (by dec_trivial_tac) this
           },
+          { cases i,
+            { simp, rw nat.sub_self (2^n), simp, exact x.property },
+            { have i_lt_n : succ i ≤ n,
+              { apply le_of_not_ge this },
+              have : x.val/2^succ i < 2^(n-succ i),
+              { apply div_lt_of_lt_mul,
+                apply pos_pow_of_pos,
+                dec_trivial_tac,
+                rw [pow_mul, add_sub_of_le],
+                apply x.property,
+                apply i_lt_n
+              },
+              apply sub_add_big_med_small (2^n) (2^(n-succ i)) (x.val/2^(succ i)) _ this,
+              have : 2^n > 2^(n-succ i),
+              { apply pow_lt_pow_of_lt_right (lt_succ_self _)
+                                             (sub_lt_of_pos_le _ _ (nat.zero_lt_succ i) i_lt_n)
+              },
+              assumption
+            },
+          }
         }
       end⟩
 
