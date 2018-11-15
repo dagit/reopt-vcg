@@ -59,6 +59,9 @@ lemma in_range (x n : ℕ) : x % 2 ^ n < 2 ^ n :=
     simp [zero_lt_succ]
   end
 
+-- bitvec specific version of vector.append
+def append {m n} (x: bitvec m) (y: bitvec n) : bitvec (m + n) := ⟨ (x.val * 2^n + y.val) % 2^(m + n), by simp [in_range] ⟩
+
 lemma div_lt_of_lt_mul {m n : ℕ} : ∀ {k} (Hk : k > 0), m < k * n → m / k < n
   | 0        Hk h := by apply absurd Hk (lt_irrefl 0)
   | (succ k) Hk h :=
@@ -329,9 +332,6 @@ section arith
 
   instance : has_mul (bitvec n)  := ⟨bitvec.mul⟩
 end arith
-
--- bitvec specific version of vector.append
-def append {m n} (x: bitvec m) (y: bitvec n) : bitvec (m + n) := shl x n + y
 
 section comparison
   variable {n : ℕ}
