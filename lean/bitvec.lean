@@ -29,13 +29,25 @@ instance {n:ℕ} : has_zero (bitvec n) := ⟨bitvec.zero n⟩
 
 -- Create a bitvector with the constant one.
 @[reducible] protected
-def one (n: ℕ) {H : n > 0} : bitvec n :=
+def one_of_pos_len (n: ℕ) {H : n > 0} : bitvec n :=
   ⟨1, calc
         1   < 2   : by dec_trivial_tac
         ... = 2^1 : by trivial
         ... ≤ 2^n : by apply (pow_le_pow_of_le_right (zero_lt_succ _) (succ_le_of_lt H))⟩
 
-instance {n:ℕ} {H: n > 0} : has_one (bitvec n)  := ⟨@bitvec.one n H⟩
+@[reducible] protected
+def one (n:ℕ) : bitvec n :=
+  begin
+    cases n,
+    case nat.zero
+    -- Treating the zero length "one" bit vector as 0 simplifies
+    -- other things, so we intentionally allow this special case.
+    { apply bitvec.zero },
+    case nat.succ
+    { apply bitvec.one_of_pos_len, apply zero_lt_succ }
+  end
+
+instance {n:ℕ} : has_one (bitvec n)  := ⟨bitvec.one n⟩
 
 protected def cong {a b : ℕ} (h : a = b) : bitvec a → bitvec b
 | ⟨x, p⟩ := ⟨x, h ▸ p⟩
@@ -123,9 +135,6 @@ section shift
   def shl (x : bitvec n) (i : ℕ) : bitvec n := ⟨x.val * 2^i % 2^n, by simp [in_range]⟩
 
   @[reducible]
-  def msb (x: bitvec n) : bool := (shl x (n-1)).val = 1
-
-  @[reducible]
   def lsb (x: bitvec n) : bool := x.val % 2 = 1
 
   -- unsigned shift right
@@ -134,6 +143,9 @@ section shift
     calc
         x.val / 2^i ≤ x.val : by apply nat.div_le_self
                 ... < 2^n   : by exact x.property⟩
+
+  @[reducible]
+  def msb (x: bitvec n) : bool := (ushr x (n-1)).val = 1
 
   -- signed shift right
   @[reducible]
@@ -300,20 +312,20 @@ section arith
 
   -- Subtract with borrow
   def sbb (x y : bitvec n) (b : bool) : bool × bitvec n :=
-  let f := λ x y c, (bitvec.carry (bnot x) y c, bitvec.xor3 x y c) in
-  vector.map_accumr₂ f x y b
+    let b₁ : bitvec n := if b then 1 else 0,
+        r  := match bitvec.adc x (bitvec.neg y) ff with
+              | (z, b₂) := bitvec.adc z (bitvec.neg b₁) ff
+              end
+    in ⟨ if b then y.val + 1 > x.val else y.val > x.val , r.1 ⟩
 
-  protected def sub (x y : bitvec n) : bitvec n := prod.snd (sbb x y ff)
-
-  instance : has_zero (bitvec n) := ⟨bitvec.zero n⟩
+  protected def sub (x y : bitvec n) : bitvec n := (sbb x y ff).2
 
   instance : has_add (bitvec n)  := ⟨bitvec.add⟩
   instance : has_sub (bitvec n)  := ⟨bitvec.sub⟩
   instance : has_neg (bitvec n)  := ⟨bitvec.neg⟩
 
   protected def mul (x y : bitvec n) : bitvec n :=
-  let f := λ r b, cond b (r + r + y) (r + r) in
-  (to_list x).foldl f 0
+    ⟨ (x.val * y.val) % 2^n, by simp [in_range] ⟩
 
   instance : has_mul (bitvec n)  := ⟨bitvec.mul⟩
 end arith
