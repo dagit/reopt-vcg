@@ -18,8 +18,6 @@ namespace bitvec
 open nat
 open vector
 
--- local infix `++ₜ`:65 := vector.append
-
 -- Create a zero bitvector
 @[reducible] protected
 def zero (n : ℕ) : bitvec n :=
@@ -214,20 +212,6 @@ section shift
 
 end shift
 
-/- JED: I thought this might be useful but I haven't needed it yet...
-lemma sub_le_of_pos_lt (a b : ℕ) (h : a < b) : b - a ≤ b :=
-  begin
-    cases a,
-    case nat.zero
-    { simp },
-    case nat.succ
-    { have : b - succ a < b,
-      { apply sub_lt_of_pos_le (succ a) b (zero_lt_succ _) (le_of_lt h) },
-      apply le_of_lt this
-    }
-  end
--/
-
 section bitwise
 
   -- A fixed width version of nat.bitwise
@@ -278,18 +262,17 @@ section bitwise
       apply (succ_pos 1)
     end⟩
 
+  @[reducible]
   def and {w:ℕ} : bitvec w → bitvec w → bitvec w := bitwise band
+  @[reducible]
   def or  {w:ℕ} : bitvec w → bitvec w → bitvec w := bitwise bor
+  @[reducible]
   def xor {w:ℕ} : bitvec w → bitvec w → bitvec w := bitwise bxor
 
 end bitwise
 
 section arith
   variable {n : ℕ}
-
-  protected def xor3 (x y c : bool) := bxor (bxor x y) c
-  protected def carry (x y c : bool) :=
-  x && y || x && c || y && c
 
   @[reducible]
   protected def neg (x : bitvec n) : bitvec n :=
@@ -306,14 +289,17 @@ section arith
       end⟩
 
   -- Add with carry (no overflow)
+  @[reducible]
   def adc (x y : bitvec n) (c : bool) : bitvec n × bool :=
     let c₁ := if c then 1 else 0,
         r  := x.val + y.val + c₁ in
     ⟨ ⟨r % 2^n, by simp [in_range] ⟩, r ≥ 2^n ⟩
 
+  @[reducible]
   protected def add (x y : bitvec n) : bitvec n := (adc x y ff).1
 
   -- Subtract with borrow
+  @[reducible]
   def sbb (x y : bitvec n) (b : bool) : bool × bitvec n :=
     let b₁ : bitvec n := if b then 1 else 0,
         r  := match bitvec.adc x (bitvec.neg y) ff with
@@ -321,12 +307,14 @@ section arith
               end
     in ⟨ if b then y.val + 1 > x.val else y.val > x.val , r.1 ⟩
 
+  @[reducible]
   protected def sub (x y : bitvec n) : bitvec n := (sbb x y ff).2
 
   instance : has_add (bitvec n)  := ⟨bitvec.add⟩
   instance : has_sub (bitvec n)  := ⟨bitvec.sub⟩
   instance : has_neg (bitvec n)  := ⟨bitvec.neg⟩
 
+  @[reducible]
   protected def mul (x y : bitvec n) : bitvec n :=
     ⟨ (x.val * y.val) % 2^n, by simp [in_range] ⟩
 
@@ -336,12 +324,17 @@ end arith
 section comparison
   variable {n : ℕ}
 
+  @[reducible]
   def uborrow (x y : bitvec n) : bool := prod.fst (sbb x y ff)
 
+  @[reducible]
   def ult (x y : bitvec n) : Prop := uborrow x y
+  @[reducible]
   def ugt (x y : bitvec n) : Prop := ult y x
 
+  @[reducible]
   def ule (x y : bitvec n) : Prop := ¬ (ult y x)
+  @[reducible]
   def uge (x y : bitvec n) : Prop := ule y x
 
   def sborrow : Π {n : ℕ}, bitvec n → bitvec n → bool
@@ -354,9 +347,13 @@ section comparison
     | (tt, tt) := uborrow (bitvec.neg y) (bitvec.neg x) -- -x < -y when y < x
     end
 
+  @[reducible]
   def slt (x y : bitvec n) : Prop := sborrow x y
+  @[reducible]
   def sgt (x y : bitvec n) : Prop := slt y x
+  @[reducible]
   def sle (x y : bitvec n) : Prop := ¬ (slt y x)
+  @[reducible]
   def sge (x y : bitvec n) : Prop := sle y x
 
 end comparison
@@ -364,79 +361,38 @@ end comparison
 section conversion
   variable {α : Type}
 
-  protected def of_nat : Π (n : ℕ), nat → bitvec n
-  | 0        x := nil
-  | (succ n) x := of_nat n (x / 2) ++ₜ to_bool (x % 2 = 1) :: nil
+  @[reducible]
+  protected def of_nat (n : ℕ) (x:ℕ) : bitvec n := ⟨ x % 2^n, by simp [in_range] ⟩
 
+  @[reducible]
   protected def of_int : Π (n : ℕ), int → bitvec (succ n)
-  | n (int.of_nat m)          := ff :: bitvec.of_nat n m
-  | n (int.neg_succ_of_nat m) := tt :: not (bitvec.of_nat n m)
+  | n (int.of_nat m)          := bitvec.of_nat (succ n) m
+  | n (int.neg_succ_of_nat m) := bitvec.neg (bitvec.of_nat (succ n) m)
 
-  def add_lsb (r : ℕ) (b : bool) := r + r + cond b 1 0
+  @[reducible]
+  protected def to_nat {n : nat} (v : bitvec n) : nat := v.val
 
-  def bits_to_nat (v : list bool) : nat :=
-  v.foldl add_lsb 0
-
-  protected def to_nat {n : nat} (v : bitvec n) : nat :=
-  bits_to_nat (to_list v)
-
-  theorem bits_to_nat_to_list {n : ℕ} (x : bitvec n)
-  : bitvec.to_nat x = bits_to_nat (vector.to_list x)  := rfl
-
-  local attribute [simp] add_comm add_assoc add_left_comm mul_comm mul_assoc mul_left_comm
-
-  theorem to_nat_append {m : ℕ} (xs : bitvec m) (b : bool)
-  : bitvec.to_nat (xs ++ₜ b::nil) = bitvec.to_nat xs * 2 + bitvec.to_nat (b::nil) :=
-  begin
-    cases xs with xs P,
-    simp [bits_to_nat_to_list], clear P,
-    unfold bits_to_nat list.foldl,
-    -- generalize the accumulator of foldl
-    generalize h : 0 = x, conv in (add_lsb x b) { rw ←h }, clear h,
-    simp,
-    induction xs with x xs generalizing x,
-    { simp, unfold list.foldl add_lsb, simp [nat.mul_succ] },
-    { simp, apply xs_ih }
-  end
-
-  theorem bits_to_nat_to_bool (n : ℕ)
-  : bitvec.to_nat (to_bool (n % 2 = 1) :: nil) = n % 2 :=
-  begin
-    simp [bits_to_nat_to_list],
-    unfold bits_to_nat add_lsb list.foldl cond,
-    simp [cond_to_bool_mod_two],
-  end
-
-  theorem of_nat_succ {k n : ℕ}
-  :  bitvec.of_nat (succ k) n = bitvec.of_nat k (n / 2) ++ₜ to_bool (n % 2 = 1) :: nil :=
-  rfl
+  theorem of_nat_to_nat {n : ℕ} (x : bitvec n)
+  : bitvec.of_nat n (bitvec.to_nat x) = x :=
+    begin
+      cases x,
+      simp [bitvec.to_nat, bitvec.of_nat],
+      apply mod_eq_of_lt x_property,
+    end
 
   theorem to_nat_of_nat {k n : ℕ}
   : bitvec.to_nat (bitvec.of_nat k n) = n % 2^k :=
-  begin
-    induction k with k generalizing n,
-    { unfold pow nat.pow, simp [nat.mod_one], refl },
-    { have h : 0 < 2, { apply le_succ },
-      rw [ of_nat_succ
-         , to_nat_append
-         , k_ih
-         , bits_to_nat_to_bool
-         , mod_pow_succ h],
-      ac_refl, }
-  end
+    begin
+      simp [bitvec.of_nat, bitvec.to_nat]
+    end
 
-  protected def to_int : Π {n : nat}, bitvec n → int
-  | 0        _ := 0
-  | (succ n) v :=
-    cond (head v)
-      (int.neg_succ_of_nat $ bitvec.to_nat $ not $ tail v)
-      (int.of_nat $ bitvec.to_nat $ tail v)
+  protected def to_int {n:ℕ} (x: bitvec n) : int :=
+    match msb x with
+    | ff := int.of_nat x.val
+    | tt := int.neg_of_nat x.val
+    end
 
 end conversion
-
-private def repr {n : nat} : bitvec n → string
-| ⟨bs, p⟩ :=
-  "0b" ++ (bs.map (λ b : bool, if b then '1' else '0')).as_string
 
 instance (n : nat) : has_repr (bitvec n) :=
 ⟨repr⟩
