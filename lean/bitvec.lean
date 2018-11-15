@@ -347,10 +347,11 @@ section comparison
   def sborrow : Π {n : ℕ}, bitvec n → bitvec n → bool
   | 0        _ _ := ff
   | (succ n) x y :=
-    match (head x, head y) with
+    match (msb x, msb y) with
     | (tt, ff) := tt
     | (ff, tt) := ff
-    | _        := uborrow (tail x) (tail y)
+    | (ff, ff) := uborrow x y
+    | (tt, tt) := uborrow (bitvec.neg y) (bitvec.neg x) -- -x < -y when y < x
     end
 
   def slt (x y : bitvec n) : Prop := sborrow x y
