@@ -389,7 +389,7 @@ section conversion
   protected def to_int {n:ℕ} (x: bitvec n) : int :=
     match msb x with
     | ff := int.of_nat x.val
-    | tt := int.neg_of_nat x.val
+    | tt := int.neg_of_nat (bitvec.neg x).val
     end
 
 end conversion
